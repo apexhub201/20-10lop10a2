@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💌 20/10 Lớp 10A2 💌</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Hoa rơi nền */
+  .petal {
+    position: fixed;
+    top: -50px;
+    font-size: 22px;
+    animation: fall linear infinite;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.9;
+  }
+  @keyframes fall {
+    0%   { transform: translateY(-50px) rotate(0deg); opacity: 0; }
+    10%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  .stage {
+    position: relative;
+    width: 340px;
+    height: 240px;
+    perspective: 1200px;
+    z-index: 5;
+  }
+
+  /* PHONG BÌ */
+  .envelope {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: opacity 1.2s ease;
+    cursor: pointer;
+  }
+
+  /* Mỗi lần nhấn -> lắc 1 nhịp */
+  .envelope.shake-once {
+    animation: shakeOnce 0.6s ease-in-out;
+  }
+  @keyframes shakeOnce {
+    0%   { transform: rotate(0deg) translateY(0); }
+    20%  { transform: rotate(-7deg) translateY(-6px); }
+    40%  { transform: rotate(6deg) translateY(-2px); }
+    60%  { transform: rotate(-5deg) translateY(-8px); }
+    80%  { transform: rotate(3deg) translateY(-3px); }
+    100% { transform: rotate(0deg) translateY(0); }
+  }
+
+  .env-body {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, #fff0f5, #ffd1dc);
+    border-radius: 10px;
+    box-shadow: 0 20px 45px rgba(200, 60, 120, 0.45),
+                inset 0 0 0 2px rgba(255,255,255,0.6);
+    overflow: hidden;
+  }
+
+  /* Tem thư */
+  .stamp {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 52px;
+    height: 62px;
+    background: linear-gradient(135deg, #ff6fa5, #ff3d7f);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 22px;
+    box-shadow: 0 4px 10px rgba(255,61,127,0.5);
+    border: 2px dashed rgba(255,255,255,0.8);
+    z-index: 6;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.08); }
+  }
+
+  /* Nắp phong bì */
+  .env-flap {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 0;
+    border-left: 170px solid transparent;
+    border-right: 170px solid transparent;
+    border-top: 120px solid #ffb6c9;
+    transform-origin: top center;
+    transition: transform 0.9s cubic-bezier(.68,-0.55,.27,1.55);
+    z-index: 8;
+    filter: drop-shadow(0 4px 6px rgba(200,60,120,0.3));
+  }
+  .envelope.open .env-flap {
+    transform: rotateX(180deg);
+  }
+
+  /* Trái tim giữa phong bì */
+  .heart {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 42px;
+    z-index: 7;
+    animation: heartbeat 1.2s ease-in-out infinite;
+    transition: opacity 0.4s;
+  }
+  .envelope.open .heart { opacity: 0; }
+  @keyframes heartbeat {
+    0%,100% { transform: translate(-50%,-50%) scale(1); }
+    50%     { transform: translate(-50%,-50%) scale(1.25); }
+  }
+
+  /* Đếm số lần nhấn */
+  .counter {
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #b3246b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: rgba(255,255,255,0.7);
+    padding: 3px 12px;
+    border-radius: 12px;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.4s;
+  }
+
+  /* ====== LÁ THƯ ====== */
+  .letter-wrap {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+    transition: all 1s cubic-bezier(.34,1.56,.64,1);
+  }
+  .letter-wrap.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+  }
+
+  .letter {
+    position: relative;
+    width: 380px;
+    max-width: 88vw;
+    max-height: 82vh;
+    overflow-y: auto;
+    background: linear-gradient(160deg, #fffdf8, #fff5f8);
+    border-radius: 14px;
+    padding: 30px 26px;
+    box-shadow: 0 25px 65px rgba(180, 40, 100, 0.55),
+                0 0 0 1px rgba(255,255,255,0.6) inset;
+    border: 1px solid #ffd6e5;
+  }
+  .letter::-webkit-scrollbar { width: 6px; }
+  .letter::-webkit-scrollbar-thumb {
+    background: #ff8fb3;
+    border-radius: 3px;
+  }
+
+  .letter::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px dashed #ffb6c9;
+    border-radius: 10px;
+    pointer-events: none;
+  }
+
+  .letter h1 {
+    font-size: 20px;
+    color: #d6246e;
+    text-align: center;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(214,36,110,0.2);
+    position: relative;
+    z-index: 2;
+  }
+
+  .letter .divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff8fb3, transparent);
+    margin: 8px 0 16px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .letter p {
+    font-size: 14.5px;
+    color: #5a2a44;
+    line-height: 1.7;
+    text-align: justify;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .letter .sign {
+    text-align: right;
+    font-style: italic;
+    color: #d6246e;
+    font-size: 14px;
+    margin-top: 16px;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+  }
+
+  .letter .names {
+    font-weight: 700;
+    background: linear-gradient(90deg,#ff8fb3,#ff4d94);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .letter .corner-heart {
+    position: absolute;
+    font-size: 15px;
+    opacity: 0.55;
+    z-index: 1;
+  }
+  .letter .c1 { top: 12px; left: 14px; }
+  .letter .c2 { bottom: 12px; right: 14px; }
+  .letter .c3 { top: 12px; right: 14px; }
+  .letter .c4 { bottom: 12px; left: 14px; }
+
+  /* Hint */
+  .hint {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #b3246b;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-align: center;
+    z-index: 6;
+    text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+    animation: blink 1.8s ease-in-out infinite;
+    padding: 6px 16px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.5s;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    50%     { opacity: 0.4; transform: translateX(-50%) translateY(-4px); }
+  }
+
+  /* Trái tim bay khi mở */
+  .fly-heart {
+    position: fixed;
+    font-size: 20px;
+    pointer-events: none;
+    z-index: 100;
+    animation: flyUp 2.5s ease-out forwards;
+  }
+  @keyframes flyUp {
+    0%   { transform: translate(0,0) scale(0.5); opacity: 0; }
+    20%  { opacity: 1; }
+    100% { transform: translate(var(--tx), -80vh) scale(1.4) rotate(var(--rot)); opacity: 0; }
+  }
+
+  /* Confetti */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    z-index: 99;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(900deg); opacity: 0; }
+  }
+
+  /* Responsive */
+  @media (max-width: 420px) {
+    .stage { transform: scale(0.85); }
+    .letter { width: 300px; padding: 24px 20px; }
+    .letter h1 { font-size: 17px; }
+    .letter p { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Cánh hoa rơi -->
+  <div id="petals"></div>
+
+  <!-- Phong bì -->
+  <div class="stage">
+    <div class="envelope" id="envelope">
+      <div class="env-body"></div>
+      <div class="stamp">💌</div>
+      <div class="heart">❤️</div>
+      <div class="env-flap"></div>
+    </div>
+    <div class="counter" id="counter">Nhấn 4 lần để mở 💌</div>
+  </div>
+
+  <!-- Lá thư (đặt riêng, ở giữa màn hình) -->
+  <div class="letter-wrap" id="letterWrap">
+    <div class="letter">
+      <span class="corner-heart c1">🌸</span>
+      <span class="corner-heart c2">🌸</span>
+      <span class="corner-heart c3">💮</span>
+      <span class="corner-heart c4">💮</span>
+      <h1>💐 CHÚC MỪNG NGÀY 20/10 💐</h1>
+      <div class="divider"></div>
+      <p>
+        Nhân ngày Phụ nữ Việt Nam 20/10, <span class="names">Lâm Thịnh</span>
+        cùng toàn thể các bạn nam trong lớp <b>10A2</b> xin gửi tới các bạn nữ
+        những lời chúc tốt đẹp nhất!
+      </p>
+      <p>
+        Chúc các bạn luôn xinh đẹp, rạng rỡ, học giỏi, gặp nhiều niềm vui
+        và may mắn. Mong rằng nụ cười của các bạn sẽ luôn tỏa sáng
+        như những đóa hoa rực rỡ nhất! 🌷
+      </p>
+      <p>
+        Cảm ơn các bạn đã luôn là một nửa tuyệt vời của lớp 10A2. 💖
+      </p>
+      <div class="sign">— Lâm Thịnh & các bạn nam lớp 10A2 —</div>
+    </div>
+  </div>
+
+  <div class="hint" id="hint">👆 Chạm vào phong bì để mở thư 👆</div>
+
+<script>
+  const envelope  = document.getElementById('envelope');
+  const letterWrap= document.getElementById('letterWrap');
+  const hint      = document.getElementById('hint');
+  const counter   = document.getElementById('counter');
+
+  const TARGET = 4; // Số lần cần nhấn
+  let clickCount = 0;
+  let opened = false;
+  let shaking = false;
+
+  /* Tạo cánh hoa rơi nền */
+  const petalEmojis = ['🌸','🌺','🌷','💮','🏵️','💐','🌹'];
+  const petalsBox = document.getElementById('petals');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.textContent = petalEmojis[Math.floor(Math.random()*petalEmojis.length)];
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.animationDuration = (6 + Math.random() * 7) + 's';
+    p.style.animationDelay = (Math.random() * 8) + 's';
+    p.style.fontSize = (16 + Math.random() * 18) + 'px';
+    petalsBox.appendChild(p);
+  }
+
+  /* Nhấn vào phong bì */
+  envelope.addEventListener('click', () => {
+    if (opened || shaking) return;
+
+    clickCount++;
+    shaking = true;
+
+    // Thêm class lắc 1 nhịp
+    envelope.classList.add('shake-once');
+
+    // Xóa class sau khi lắc xong
+    setTimeout(() => {
+      envelope.classList.remove('shake-once');
+      shaking = false;
+    }, 620);
+
+    // Cập nhật bộ đếm
+    const remain = TARGET - clickCount;
+    if (remain > 0) {
+      counter.textContent = `Còn ${remain} lần nhấn nữa... 💗`;
+    } else {
+      counter.textContent = 'Đang mở thư... 💌';
+    }
+
+    // Đủ số lần -> mở
+    if (clickCount >= TARGET) {
+      openLetter();
+    }
+  });
+
+  /* Mở lá thư */
+  function openLetter() {
+    opened = true;
+    counter.style.opacity = '0';
+    hint.style.opacity = '0';
+
+    // 1. Mở nắp phong bì
+    setTimeout(() => envelope.classList.add('open'), 300);
+
+    // 2. Sau khi nắp mở xong -> phong bì tan biến + lá thư hiện ra
+    setTimeout(() => {
+      envelope.style.opacity = '0';
+      envelope.style.transform = 'scale(0.7) rotate(-8deg)';
+      envelope.style.transition = 'all 1s ease';
+    }, 1100);
+
+    // 3. Lá thư trượt hiện ra ở giữa
+    setTimeout(() => {
+      letterWrap.classList.add('show');
+    }, 1400);
+
+    // 4. Bắn hiệu ứng
+    setTimeout(() => {
+      burstHearts();
+      burstConfetti();
+    }, 1900);
+  }
+
+  /* Trái tim bay lên */
+  function burstHearts() {
+    const heartEmojis = ['❤️','💖','💕','💗','💓','🌹','🌸'];
+    for (let i = 0; i < 24; i++) {
+      const h = document.createElement('div');
+      h.className = 'fly-heart';
+      h.textContent = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+      h.style.left = (40 + Math.random() * 20) + 'vw';
+      h.style.bottom = '30vh';
+      h.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
+      h.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+      h.style.animationDelay = (Math.random() * 0.8) + 's';
+      h.style.fontSize = (16 + Math.random() * 20) + 'px';
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 3500);
+    }
+  }
+
+  /* Confetti */
+  function burstConfetti() {
+    const colors = ['#ff4d94','#ffb6c9','#ffd700','#ff8fb3','#a01860','#ff6fa5','#fff0f5'];
+    for (let i = 0; i < 80; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random()*colors.length)];
+      c.style.width = (6 + Math.random() * 8) + 'px';
+      c.style.height = (6 + Math.random() * 10) + 'px';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      c.style.animationDuration = (2.5 + Math.random() * 2.5) + 's';
+      c.style.animationDelay = (Math.random() * 0.6) + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5500);
+    }
+  }
+</script>
+</body>
+</html>
